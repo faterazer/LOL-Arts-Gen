@@ -1,12 +1,13 @@
 import lightning.pytorch as pl
 import torch.optim
 from torch import Tensor, nn, optim
+from torch.nn import functional as F
 
 
 class AutoEncoder(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, learning_rate: float = 1e-3):
         super().__init__()
-        self._encoder = nn.Sequential(
+        self.encoder = nn.Sequential(
             nn.Conv2d(3, 4, kernel_size=15, padding=7),  # (4, 1080, 1920)
             nn.ReLU(),
             nn.Conv2d(4, 8, kernel_size=15, padding=7, stride=(3, 4)),  # (8, 360, 480)
@@ -24,7 +25,7 @@ class AutoEncoder(pl.LightningModule):
             nn.Conv2d(256, 40, kernel_size=1),  # (40, 5, 5)
             nn.ReLU(),
         )
-        self._decoder = nn.Sequential(
+        self.decoder = nn.Sequential(
             nn.ConvTranspose2d(40, 256, kernel_size=1),  # (256, 5, 5),
             nn.ReLU(),
             nn.ConvTranspose2d(256, 128, kernel_size=3, padding=1, stride=2, output_padding=1),  # (128, 10, 10)
@@ -44,16 +45,22 @@ class AutoEncoder(pl.LightningModule):
             nn.ConvTranspose2d(4, 3, kernel_size=15, padding=7),  # (3, 1080, 1920)
             nn.ReLU(),
         )
-        self._criterion = nn.MSELoss()
+        self._lr = learning_rate
+
+    @staticmethod
+    def _reconstruction_loss(x_hat: Tensor, x: Tensor) -> Tensor:
+        loss = F.mse_loss(x_hat, x, reduction="none")
+        loss = loss.sum(dim=[1, 2, 3]).mean(dim=0)
+        return loss
 
     def training_step(self, batch: Tensor) -> Tensor:
         x = batch
-        z = self._encoder(x)
-        x_hat = self._decoder(z)
-        loss = self._criterion(x_hat, x)
+        z = self.encoder(x)
+        x_hat = self.decoder(z)
+        loss = self._reconstruction_loss(x_hat, x)
         self.log("train_loss", loss)
         return loss
 
     def configure_optimizers(self) -> optim.Optimizer:
-        optimizer = torch.optim.Adam(self.parameters())
+        optimizer = torch.optim.Adam(self.parameters(), lr=self._lr)
         return optimizer
