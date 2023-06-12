@@ -7,6 +7,12 @@ from AE import AutoEncoder
 from datautils import LOLArtsDataset
 
 
+# Hyperparameters
+batch_size = 32
+learning_rate = 1e-4
+max_epochs = 20
+
+
 def main(hparams: Namespace) -> None:
     if hparams.accelerator is None:
         hparams.accelerator = "cpu"
@@ -14,9 +20,11 @@ def main(hparams: Namespace) -> None:
         hparams.devices = "auto"
 
     train_dataset = LOLArtsDataset("./LOL-Arts")
-    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=4, pin_memory=True)
-    model = AutoEncoder()
-    trainer = pl.Trainer(max_epochs=5, accelerator=hparams.accelerator, devices=hparams.devices)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
+    model = AutoEncoder(learning_rate=learning_rate)
+    trainer = pl.Trainer(
+        max_epochs=max_epochs, accelerator=hparams.accelerator, devices=hparams.devices, log_every_n_steps=10
+    )
     trainer.fit(model=model, train_dataloaders=train_loader)
 
 
