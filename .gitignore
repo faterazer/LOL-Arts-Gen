@@ -2,3 +2,5 @@ LOL-Arts/
 *.pyc
 .idea/
 lightning_logs/
+Temp/
+test.ipynb
