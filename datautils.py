@@ -20,10 +20,10 @@ def AdaResize(img: Image.Image) -> Image.Image:
 default_transform = transforms.Compose(
     [
         transforms.RandomHorizontalFlip(),
-        # transforms.Resize(size=1280),
         AdaResize,
         transforms.RandomCrop(size=(1080, 1920)),
         transforms.ToTensor(),
+        # transforms.Normalize(mean=(0.3104, 0.2722, 0.3082), std=(0.2035, 0.1932, 0.1918)),
     ]
 )
 
@@ -40,9 +40,5 @@ class LOLArtsDataset(Dataset):
     def __getitem__(self, index: int) -> Image.Image:
         filename = self._files[index]
         img = Image.open(filename)
-        try:
-            img = self._transform(img)
-        except Exception as e:
-            print(e)
-            print(self._files[index])
+        img = self._transform(img)
         return img
