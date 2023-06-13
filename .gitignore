@@ -1,6 +1,7 @@
 LOL-Arts/
 *.pyc
 .idea/
+.tensorboard-info/
 lightning_logs/
 Temp/
 test.ipynb
