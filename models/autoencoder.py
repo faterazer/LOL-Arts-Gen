@@ -14,8 +14,8 @@ class AutoEncoder(pl.LightningModule):
         self.encoder = nn.Sequential(
             OrderedDict(
                 [
-                    ("conv_a1", conv_layer(3, 3, kernel_size=5, padding=2, act_fn="silu")),
-                    ("conv_a2", conv_layer(3, 3, kernel_size=5, padding=2, act_fn="silu")),
+                    ("conv_a1", conv_layer(3, 3, kernel_size=5, padding=2, act_fn="relu")),
+                    ("conv_a2", conv_layer(3, 3, kernel_size=5, padding=2, act_fn="relu")),
                     (
                         "conv_a3",
                         conv_layer(3, 32, kernel_size=5, padding=2, stride=(3, 4), act_fn="tanh"),
