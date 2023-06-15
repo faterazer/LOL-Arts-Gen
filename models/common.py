@@ -7,15 +7,15 @@ from torch import Tensor, nn
 
 
 class ZLU(pl.LightningModule):
-    def __init__(self, min: int, max: int) -> None:
+    def __init__(self, min_val: int, max_val: int) -> None:
         super().__init__()
-        self.register_buffer("min", torch.FloatTensor([min]))
-        self.register_buffer("max", torch.FloatTensor([max]))
+        self.register_buffer("min", torch.FloatTensor([min_val]))
+        self.register_buffer("max", torch.FloatTensor([max_val]))
 
-    def forward(self, input: Tensor) -> Tensor:
-        input = torch.max(self.min, input)
-        input = torch.min(self.max, input)
-        return input
+    def forward(self, x: Tensor) -> Tensor:
+        x = torch.max(self.min, x)
+        x = torch.min(self.max, x)
+        return x
 
 
 act_fn_table = {"relu": nn.ReLU, "tanh": nn.Tanh, "sigmoid": nn.Sigmoid, "silu": nn.SiLU}
@@ -24,9 +24,9 @@ act_fn_table = {"relu": nn.ReLU, "tanh": nn.Tanh, "sigmoid": nn.Sigmoid, "silu":
 def conv_layer(
     in_channels: int,
     out_channels: int,
-    kernel_size: int | Tuple[int],
+    kernel_size: int | Tuple[int, int],
     padding: int = 0,
-    stride: int | Tuple[int] = 1,
+    stride: int | Tuple[int, int] = 1,
     act_fn: str = "relu",
 ) -> nn.Module:
     buff = [("conv", nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=padding, stride=stride))]
@@ -38,10 +38,10 @@ def conv_layer(
 def deconv_layer(
     in_channels: int,
     out_channels: int,
-    kernel_size: int | Tuple[int],
+    kernel_size: int | Tuple[int, int],
     padding: int = 0,
-    stride: int | Tuple[int] = 1,
-    output_padding: int | Tuple[int] = 0,
+    stride: int | Tuple[int, int] = 1,
+    output_padding: int | Tuple[int, int] = 0,
     act_fn: str = "relu",
 ) -> nn.Module:
     buff = [
@@ -59,7 +59,7 @@ def deconv_layer(
     ]
     if act_fn != "none":
         if act_fn == "zlu":
-            buff.append(("act_fn", ZLU(min=0, max=1)))
+            buff.append(("act_fn", ZLU(min_val=0, max_val=1)))
         else:
             buff.append(("act_fn", act_fn_table[act_fn]()))
     return nn.Sequential(OrderedDict(buff))
