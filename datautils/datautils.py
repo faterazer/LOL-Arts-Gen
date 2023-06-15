@@ -2,28 +2,33 @@ import os
 from typing import Callable
 
 from PIL import Image
+from torch import nn
 from torch.utils.data import Dataset
 from torchvision import transforms
 
 
-def AdaResize(img: Image.Image) -> Image.Image:
-    w, h = img.size
-    if h == 1080:
-        return img
-    ratio = h / w
-    if ratio > 1080 / 1920:
-        return transforms.Resize(size=int(1920 * (h / w + 0.1)))(img)
-    else:
-        return transforms.Resize(size=1080)(img)
+class AdaResize(nn.Module):
+    def __init__(self, ratio: float) -> None:
+        super().__init__()
+        self.ratio = ratio
+
+    def forward(self, img: Image.Image) -> Image.Image:
+        w, h = img.size
+        if h == 1080:
+            return img
+        ratio = h / w
+        if ratio > self.ratio:
+            return transforms.Resize(size=int(1920 * (h / w + 0.1)))(img)
+        else:
+            return transforms.Resize(size=1080)(img)
 
 
 default_transform = transforms.Compose(
     [
         transforms.RandomHorizontalFlip(),
-        AdaResize,
+        AdaResize(1080 / 1920),
         transforms.RandomCrop(size=(1080, 1920)),
         transforms.ToTensor(),
-        # transforms.Normalize(mean=(0.3104, 0.2722, 0.3082), std=(0.2035, 0.1932, 0.1918)),
     ]
 )
 
