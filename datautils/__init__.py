@@ -1,1 +1,1 @@
-from .datautils import LOLArtsDataset
+from .datautils import LOLArtsDataset, default_transform
