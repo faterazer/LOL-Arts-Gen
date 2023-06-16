@@ -5,11 +5,11 @@ import torch.optim
 from torch import Tensor, nn, optim
 from torch.nn import functional as F
 
-from models.common import conv_layer, deconv_layer
+from models.common import conv_layer, deconv_layer, get_cosine_schedule_with_warmup
 
 
 class AutoEncoder(pl.LightningModule):
-    def __init__(self, learning_rate: float = 1e-3):
+    def __init__(self, warmup: float, max_iters: int, learning_rate: float = 1e-3):
         super().__init__()
         self.encoder = nn.Sequential(
             OrderedDict(
@@ -40,7 +40,9 @@ class AutoEncoder(pl.LightningModule):
                 ]
             )
         )
-        self._lr = learning_rate
+        self.warmup = warmup
+        self.max_iters = max_iters
+        self.lr = learning_rate
         self.save_hyperparameters()
 
     @staticmethod
@@ -58,5 +60,14 @@ class AutoEncoder(pl.LightningModule):
         return loss
 
     def configure_optimizers(self) -> optim.Optimizer:
-        optimizer = torch.optim.Adam(self.parameters(), lr=self._lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+
+        # We don't return the lr scheduler because we need to apply it per iteration, not per epoch
+        self.lr_scheduler = get_cosine_schedule_with_warmup(
+            optimizer, num_warmup_steps=int(self.warmup * self.max_iters), num_training_steps=self.max_iters
+        )
         return optimizer
+
+    def optimizer_step(self, *args, **kwargs):
+        super().optimizer_step(*args, **kwargs)
+        self.lr_scheduler.step()  # Step per iteration

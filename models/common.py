@@ -2,8 +2,10 @@ from collections import OrderedDict
 from typing import Tuple
 
 import lightning.pytorch as pl
+import math
 import torch
-from torch import Tensor, nn
+from torch import Tensor, nn, optim
+from torch.optim.lr_scheduler import LambdaLR
 
 
 class ZLU(pl.LightningModule):
@@ -63,3 +65,34 @@ def deconv_layer(
         else:
             buff.append(("act_fn", act_fn_table[act_fn]()))
     return nn.Sequential(OrderedDict(buff))
+
+
+def get_cosine_schedule_with_warmup(
+    optimizer: optim.Optimizer,
+    num_warmup_steps: int,
+    num_training_steps: int,
+    num_cycles: float = 0.5,
+    last_epoch: int = -1,
+) -> LambdaLR:
+    """
+    Create a schedule with a learning rate that decreases following the values of the cosine function between the
+    initial lr set in the optimizer to 0, after a warmup period during which it increases linearly between 0 and the
+    initial lr set in the optimizer.
+
+    :param optimizer: The optimizer for which to schedule the learning rate.
+    :param num_warmup_steps: The number of steps for the warmup phase.
+    :param num_training_steps: The total number of training steps.
+    :param num_cycles: The number of waves in the cosine schedule (the defaults is to just decrease from the max value
+    to 0 following a half-cosine).
+    :param last_epoch: The index of the last epoch when resuming training.
+    :return: `torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
+    """
+
+    def lr_lambda(current_step: int) -> float:
+        # Warmup
+        if current_step < num_warmup_steps:
+            return float(current_step) / float(max(1, num_warmup_steps))
+        progress = float(current_step - num_warmup_steps) / float(max(1, num_training_steps - num_warmup_steps))
+        return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))
+
+    return LambdaLR(optimizer, lr_lambda, last_epoch)

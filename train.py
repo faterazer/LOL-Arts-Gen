@@ -22,7 +22,7 @@ def main(hparams: Namespace) -> None:
     train_dataset = LOLArtsDataset("./LOL-Arts")
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
 
-    model = AutoEncoder(learning_rate=learning_rate)
+    model = AutoEncoder(warmup=0.1, max_iters=max_epochs * len(train_loader), learning_rate=learning_rate)
     print(model)
 
     lr_monitor = LearningRateMonitor(logging_interval="step")
