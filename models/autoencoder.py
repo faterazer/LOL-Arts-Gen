@@ -43,6 +43,11 @@ class AutoEncoder(pl.LightningModule):
         self.lr = learning_rate
         self.save_hyperparameters()
 
+    def forward(self, x: Tensor) -> Tensor:
+        z = self.encoder(x)
+        x_hat = self.decoder(z)
+        return x_hat
+
     @staticmethod
     def _reconstruction_loss(x_hat: Tensor, x: Tensor) -> Tensor:
         loss = F.mse_loss(x_hat, x, reduction="none")

@@ -32,6 +32,10 @@ default_transform = transforms.Compose(
     ]
 )
 
+test_transform = transforms.Compose(
+    [AdaResize(1080 / 1920), transforms.CenterCrop(size=(1080, 1920)), transforms.ToTensor()]
+)
+
 
 class LOLArtsDataset(Dataset):
     def __init__(self, data_dir: str, transform: Callable = None) -> None:
