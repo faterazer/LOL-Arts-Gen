@@ -5,7 +5,9 @@ from PIL import Image
 
 from models.autoencoder import AutoEncoder
 
-autoencoder = AutoEncoder.load_from_checkpoint("./lightning_logs/version_11/checkpoints/epoch=99-step=7400.ckpt")
+autoencoder = AutoEncoder.load_from_checkpoint(
+    "./lightning_logs/version_23/checkpoints/epoch=25-train_loss=21927.97.ckpt"
+)
 print(autoencoder)
 encoder = autoencoder.encoder.eval()
 decoder = autoencoder.decoder.eval()
@@ -17,4 +19,4 @@ for tag, filename in (("A", "GroupSplashes_VS_RivenYasuo.jpg"), ("B", "VideoStil
     x = tf(img).unsqueeze(0).cuda()
     z = encoder(x)
     x_hat = decoder(z)
-    torchvision.utils.save_image(x_hat.squeeze(), f"./Temp/V11-example-{tag}.jpg")
+    torchvision.utils.save_image(x_hat.squeeze(), f"./Temp/V23-example-{tag}.jpg")

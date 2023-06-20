@@ -8,10 +8,10 @@ from torch.nn import functional as F
 from models.common import conv_layer, deconv_layer
 
 
-class AutoEncoder(pl.LightningModule):
-    def __init__(self, learning_rate: float = 1e-3):
+class Encoder(pl.LightningModule):
+    def __init__(self) -> None:
         super().__init__()
-        self.encoder = nn.Sequential(
+        self.conv_net = nn.Sequential(
             OrderedDict(
                 [
                     ("conv_a1", conv_layer(3, 3, kernel_size=5, padding=2, act_fn="relu")),
@@ -23,7 +23,16 @@ class AutoEncoder(pl.LightningModule):
                 ]
             )
         )
-        self.decoder = nn.Sequential(
+
+    def forward(self, x: Tensor) -> Tensor:
+        y = self.conv_net(x).flatten()
+        return y
+
+
+class Decoder(pl.LightningModule):
+    def __init__(self) -> None:
+        super().__init__()
+        self.conv_net = nn.Sequential(
             OrderedDict(
                 [
                     # deconv_layer(2048, 1024, kernel_size=3, padding=1, stride=2, output_padding=1),  # (1024, 10, 10)
@@ -40,6 +49,18 @@ class AutoEncoder(pl.LightningModule):
                 ]
             )
         )
+
+    def forward(self, x: Tensor) -> None:
+        y = x.reshape(-1, 32, 360, 480)
+        y = self.conv_net(y)
+        return y
+
+
+class AutoEncoder(pl.LightningModule):
+    def __init__(self, learning_rate: float = 1e-3):
+        super().__init__()
+        self.encoder = Encoder()
+        self.decoder = Decoder()
         self.lr = learning_rate
         self.save_hyperparameters()
 

@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Tuple
+from typing import Tuple, Callable
 
 import lightning.pytorch as pl
 import math
@@ -20,7 +20,23 @@ class ZLU(pl.LightningModule):
         return x
 
 
-act_fn_table = {"relu": nn.ReLU, "tanh": nn.Tanh, "sigmoid": nn.Sigmoid, "silu": nn.SiLU}
+def get_act_fn(name: str) -> Callable:
+    if name == "relu":
+        return nn.ReLU()
+    elif name == "leaky_relu":
+        return nn.LeakyReLU()
+    elif name == "tanh":
+        return nn.Tanh()
+    elif name == "sigmoid":
+        return nn.Sigmoid()
+    elif name == "silu":
+        return nn.SiLU()
+    elif name == "gelu":
+        return nn.GELU()
+    elif name == "zlu":
+        return ZLU(min_val=0, max_val=1)
+    else:
+        raise ValueError(f"不支持的激活函数：{name}")
 
 
 def conv_layer(
@@ -30,10 +46,13 @@ def conv_layer(
     padding: int = 0,
     stride: int | Tuple[int, int] = 1,
     act_fn: str = "relu",
+    use_norm: bool = False,
 ) -> nn.Module:
     buff = [("conv", nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=padding, stride=stride))]
+    if use_norm:
+        buff.append(nn.InstanceNorm2d(out_channels))
     if act_fn != "none":
-        buff.append(("act_fn", act_fn_table[act_fn]()))
+        buff.append(("act_fn", get_act_fn(act_fn)))
     return nn.Sequential(OrderedDict(buff))
 
 
@@ -60,10 +79,7 @@ def deconv_layer(
         )
     ]
     if act_fn != "none":
-        if act_fn == "zlu":
-            buff.append(("act_fn", ZLU(min_val=0, max_val=1)))
-        else:
-            buff.append(("act_fn", act_fn_table[act_fn]()))
+        buff.append(("act_fn", get_act_fn(act_fn)))
     return nn.Sequential(OrderedDict(buff))
 
 
