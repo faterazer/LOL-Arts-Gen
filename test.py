@@ -8,13 +8,13 @@ from models.autoencoder import AutoEncoder
 
 # Hyperparameters
 batch_size = 32
-ckpt_path = "./lightning_logs/MK-1/version_27/checkpoints/epoch=139-train_loss=229.06.ckpt"
+ckpt_path = "./lightning_logs/MK-4/C/checkpoints/epoch=79-val_l2_loss=2253.61.ckpt"
 
-test_dataset = LOLArtsDataset("./LOL-Arts", transform=test_transform)
+test_dataset = LOLArtsDataset("./OOD", transform=test_transform)
 test_dataloader = DataLoader(test_dataset, batch_size=batch_size, num_workers=8, shuffle=False, pin_memory=True)
 
 model = AutoEncoder.load_from_checkpoint(ckpt_path).eval()
-l1_losses, l2_losses = [], []
+l1_losses, l2_losses = [], [] 
 
 for x in tqdm(test_dataloader):
     with torch.no_grad():

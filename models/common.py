@@ -1,8 +1,8 @@
+import math
 from collections import OrderedDict
-from typing import Tuple, Callable
+from typing import Callable, Tuple
 
 import lightning.pytorch as pl
-import math
 import torch
 from torch import Tensor, nn, optim
 from torch.optim.lr_scheduler import LambdaLR
@@ -45,12 +45,20 @@ def conv_layer(
     kernel_size: int | Tuple[int, int],
     padding: int = 0,
     stride: int | Tuple[int, int] = 1,
+    groups: int = 1,
     act_fn: str = "relu",
     use_norm: bool = False,
 ) -> nn.Module:
-    buff = [("conv", nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=padding, stride=stride))]
+    buff = [
+        (
+            "conv",
+            nn.Conv2d(
+                in_channels, out_channels, kernel_size=kernel_size, padding=padding, stride=stride, groups=groups
+            ),
+        )
+    ]
     if use_norm:
-        buff.append(nn.InstanceNorm2d(out_channels))
+        buff.append(("inorm", nn.InstanceNorm2d(out_channels)))
     if act_fn != "none":
         buff.append(("act_fn", get_act_fn(act_fn)))
     return nn.Sequential(OrderedDict(buff))
