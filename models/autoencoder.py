@@ -1,7 +1,6 @@
 import lightning.pytorch as pl
 import torch.optim
 from lightning.pytorch.utilities import grad_norm
-from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn, optim
 from torch.nn import functional as F
 from torch.optim.optimizer import Optimizer
@@ -125,7 +124,7 @@ class AutoEncoder(pl.LightningModule):
         self.log("val_l2_loss", mean_l2_loss)
         self.validation_step_outputs.clear()
 
-    def configure_optimizers(self) -> optim.Optimizer:
+    def configure_optimizers(self) -> optim.Optimizer | dict:
         # params = list(self.named_parameters())
 
         # def is_pretrained(name: str) -> bool:
@@ -138,7 +137,7 @@ class AutoEncoder(pl.LightningModule):
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()), lr=self.lr)
         if self.use_lr_scheduler:
             lr_scheduler = get_cosine_schedule_with_warmup(
-                optimizer, num_warmup_steps=0.1 * self.max_iters, num_training_steps=self.max_iters
+                optimizer, num_warmup_steps=int(0.1 * self.max_iters), num_training_steps=self.max_iters
             )
             return {"optimizer": optimizer, "lr_scheduler": {"scheduler": lr_scheduler, "interval": "step"}}
         else:

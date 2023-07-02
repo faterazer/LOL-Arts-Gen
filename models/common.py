@@ -58,7 +58,7 @@ def conv_layer(
         )
     ]
     if use_norm:
-        buff.append(("inorm", nn.InstanceNorm2d(out_channels)))
+        buff.append(("norm", nn.InstanceNorm2d(out_channels)))
     if act_fn != "none":
         buff.append(("act_fn", get_act_fn(act_fn)))
     return nn.Sequential(OrderedDict(buff))
